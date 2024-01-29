@@ -34,7 +34,7 @@ def check(re):
         elif "|" in i:
             startingnode = state
             char = i.split('|')
-            char.ignore('\t')
+            if '' in char:char.remove('')
             endingnode = (len(char) * 2 + 1)+state
             for j in char:
                 ns = state + 1
