@@ -1,5 +1,6 @@
 import re
 stack=[]
+state =0
 def nfa_1(i, state):
     if 'a' <= i <= 'z':
         ns = state + 1
@@ -13,10 +14,13 @@ def occurrence(state):
 
 
 def check(re_input):
-    state=0
+    global state
+    global stack
     regex=re_input.split()
     if "(" in re_input:
+        match = re.search(r'\(([a-zA-Z])\*\)', re_input)
         regex = re_input.replace("(", " ( ").replace(")", " ) ").split()
+        stack.append([''])
         regex.remove("(")
         regex.remove(")")
     for i in regex:
@@ -30,9 +34,21 @@ def check(re_input):
             startingnode = state
             ns = state + 1
             if char=='':
-                stack.append("*")
+                if match is None:
+                    stack.append('*')
+                    position=stack.index([''])
+                    fposition=stack.index("*")
+                    felements=stack[position+1]#first element position in parathesis
+                    elements=stack[fposition-1]#last element position in parathesis
+                    first_node=felements[0]
+                    final_node=elements[len(elements)-1]
+                    fstate=int(first_node[:1])#first state for adding node for ()*
+                    lstate=int(final_node[-1:])#last state for adding node for ()*
+                    add=[elements,[f'{lstate} --> e --> {fstate}'],[f'{lstate} --> e --> {lstate+1}'],[f'{fstate} --> e --> {lstate+1}']]
+                    stack=stack[:fposition-1]+add+stack[fposition+1:]
+                    state=lstate+1
+                    continue
                 continue
-
             substack.append(f"{state} --> e --> {ns}")
             state += 1
             substack.append(nfa_1(char, state))
@@ -50,7 +66,7 @@ def check(re_input):
             endingnode = (len(char) * 2 + 1)+state
             for j in char:
                 if j=='':
-                    stack.append("*")
+                    stack.append('|')
                     continue
                 ns = state + 1
                 substack.append(f"{startingnode} --> e --> {ns}")
@@ -62,7 +78,7 @@ def check(re_input):
         stack.append(substack)
     for k in stack:
         for ele in k:print(ele)
-    print(stack)
+    # print(stack)
 
 re_input = input("Enter regular expression: ")
 check(re_input)
