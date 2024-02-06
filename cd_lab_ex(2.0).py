@@ -20,11 +20,10 @@ def check(re_input):
     if "(" in re_input:
         match = re.search(r'\(([a-zA-Z])\*\)', re_input)
         regex = re_input.replace("(", " ( ").replace(")", " ) ").split()
-        stack.append([''])
-        regex.remove("(")
+        # regex.remove("(")
         regex.remove(")")
     for i in regex:
-        if "*" not in i and "|" not in i:
+        if "*" not in i and "|" not in i and " " not in i:
             substack=[]
             substack.append(nfa_1(i, state))
             state+=1
@@ -47,6 +46,7 @@ def check(re_input):
                     add=[elements,[f'{lstate} --> e --> {fstate}'],[f'{lstate} --> e --> {lstate+1}'],[f'{fstate} --> e --> {lstate+1}']]
                     stack=stack[:fposition-1]+add+stack[fposition+1:]
                     state=lstate+1
+                    stack.remove([''])
                     continue
                 continue
             substack.append(f"{state} --> e --> {ns}")
