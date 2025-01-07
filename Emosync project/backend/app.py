@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tensorflow as tf
@@ -6,11 +7,15 @@ from PIL import Image
 import io
 from utils import preprocess_image
 
+# Initialize Flask app
 app = Flask(__name__)
+
+# Enable CORS to allow requests from any domain
 CORS(app)
 
 # Load your trained model
-model = tf.keras.models.load_model("emotion_detection_model.h5")
+model_path = os.getenv('./', 'emotion_detection_model.h5')
+model = tf.keras.models.load_model(model_path)
 
 @app.route('/predict', methods=['POST'])
 def predict_emotion():
@@ -24,11 +29,13 @@ def predict_emotion():
 
     # Predict emotion
     predictions = model.predict(np.expand_dims(processed_image, axis=0))
-    emotion = np.argmax(predictions)  # Assuming one-hot encoding
-    emotion_map = {0: "Angry", 1: "Disgust", 2: "Fear", 3: "Happy", 4: "Sad", 5: "Surprise", 6: "Neutral"}  # Replace with your emotion classes
+    emotion = np.argmax(predictions)
+    emotion_map = {0: "Angry", 1: "Disgust", 2: "Fear", 3: "Happy", 4: "Sad", 5: "Surprise", 6: "Neutral"}
     detected_emotion = emotion_map.get(emotion, "unknown")
 
     return jsonify({"emotion": detected_emotion})
 
+# Run the server
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Use the dynamic port assigned by Render
+    app.run(host='0.0.0.0', port=port)
