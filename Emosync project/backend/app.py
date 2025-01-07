@@ -9,7 +9,7 @@ from utils import preprocess_image
 app = Flask(__name__)
 
 # Enable CORS all
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Load your trained emotion detection model
 model = tf.keras.models.load_model("emotion_detection_model.h5")
