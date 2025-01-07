@@ -29,7 +29,7 @@ emotion_map = {
 def home():
     return "Emotion Detection Server is running!"
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['GET'])
 def predict_emotion():
     try:
         if 'image' not in request.files:
