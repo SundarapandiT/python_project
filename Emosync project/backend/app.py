@@ -8,8 +8,12 @@ from utils import preprocess_image
 
 app = Flask(__name__)
 
-# Enable CORS for specific origins (make sure to update with the correct frontend origin)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})  # Allow React app on localhost
+# Enable CORS for specific origins, methods, and headers
+CORS(app, resources={r"/*": {
+    "origins": "http://localhost:3000",  # Allow React app running on localhost:3000
+    "methods": ["GET", "POST"],         # Allow GET and POST methods
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"]  # Allow specific headers
+}})
 
 # Load your trained emotion detection model
 model = tf.keras.models.load_model("emotion_detection_model.h5")
@@ -29,7 +33,7 @@ emotion_map = {
 def home():
     return "Emotion Detection Server is running!"
 
-@app.route('/predict', methods=['GET'])
+@app.route('/predict', methods=['POST'])
 def predict_emotion():
     try:
         if 'image' not in request.files:
