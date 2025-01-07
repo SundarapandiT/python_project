@@ -9,7 +9,7 @@ from utils import preprocess_image
 app = Flask(__name__)
 
 # Enable CORS for specific origins (make sure to update with the correct frontend origin)
-CORS(app, resources={r"/predict": {"origins": "http://localhost:3000"}})  # Allow React app on localhost
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})  # Allow React app on localhost
 
 # Load your trained emotion detection model
 model = tf.keras.models.load_model("emotion_detection_model.h5")
