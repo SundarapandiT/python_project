@@ -1,4 +1,3 @@
-import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tensorflow as tf
@@ -7,15 +6,12 @@ from PIL import Image
 import io
 from utils import preprocess_image
 
-# Initialize Flask app
 app = Flask(__name__)
-
-# Enable CORS to allow requests from any domain
-CORS(app)
+# Allow all origins to access your server
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Load your trained model
-model_path = os.getenv('./', 'emotion_detection_model.h5')
-model = tf.keras.models.load_model(model_path)
+model = tf.keras.models.load_model("emotion_detection_model.h5")
 
 @app.route('/predict', methods=['POST'])
 def predict_emotion():
@@ -35,7 +31,5 @@ def predict_emotion():
 
     return jsonify({"emotion": detected_emotion})
 
-# Run the server
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))  # Use the dynamic port assigned by Render
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
