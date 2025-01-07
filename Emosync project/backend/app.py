@@ -4,13 +4,12 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import io
-from utils import preprocess_image  # Assuming you have a utility function to preprocess images
+from utils import preprocess_image
 
 app = Flask(__name__)
 
-# Enable CORS for all origins (use appropriate security measures in production)
-CORS(app)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})  # Allow React app on localhost
+# Enable CORS for specific origins (make sure to update with the correct frontend origin)
+CORS(app, resources={r"/predict": {"origins": "http://localhost:3000"}})  # Allow React app on localhost
 
 # Load your trained emotion detection model
 model = tf.keras.models.load_model("emotion_detection_model.h5")
@@ -54,4 +53,4 @@ def predict_emotion():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
