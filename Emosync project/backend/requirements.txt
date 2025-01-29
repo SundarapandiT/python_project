@@ -3,5 +3,6 @@ Flask-Cors
 tensorflow
 numpy
 pillow
+fer
 gunicorn
 
