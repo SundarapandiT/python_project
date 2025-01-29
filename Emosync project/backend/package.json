@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js" ,
+    "postinstall": "mkdir -p models && cd models && curl -O https://github.com/justadudewhohacks/face-api.js/raw/master/weights/ssd_mobilenetv1_model-weights_manifest.json && curl -O https://github.com/justadudewhohacks/face-api.js/raw/master/weights/face_expression_model-weights_manifest.json && curl -O https://github.com/justadudewhohacks/face-api.js/raw/master/weights/ssd_mobilenetv1_model-shard1 && curl -O https://github.com/justadudewhohacks/face-api.js/raw/master/weights/face_expression_model-shard1"
   },
   "dependencies": {
     "axios": "^1.6.0",
