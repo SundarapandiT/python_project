@@ -1,26 +1,29 @@
 {
-    "name": "emotion-detection-server",
-    "version": "1.0.0",
-    "description": "Server for emotion detection from images using face-api.js",
-    "main": "server.js",
-    "scripts": {
-        "start": "node server.js",
-        "dev": "nodemon server.js"
-    },
-    "dependencies": {
-        "canvas": "^2.11.0",
-        "cors": "^2.8.5",
-        "emotion-detection-server": "file:",
-        "express": "^4.18.2",
-        "face-api.js": "^0.22.2",
-        "multer": "^1.4.5-lts.1"
-    },
-    "devDependencies": {
-        "nodemon": "^2.0.22"
-    },
-    "engines": {
-        "node": ">=16.0.0"
-    },
-    "author": "Sundarapandi T",
-    "license": "Annamalai University"
+  "name": "emotion-detection-server",
+  "version": "1.0.0",
+  "description": "An Express server for detecting emotions from images using face-api.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "canvas": "^2.11.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "face-api.js": "^0.22.2",
+    "fs-extra": "^11.2.0",
+    "multer": "^1.4.5-lts.1",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": ["face-api", "emotion-detection", "express", "AI"],
+  "author": "Sundarapandi T",
+  "license": "Annamalai University"
 }
