@@ -1,107 +1,94 @@
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const tf = require("@tensorflow/tfjs-node"); // TensorFlow.js for Node.js
 const { createCanvas, Image } = require("canvas");
-const faceapi = require("face-api.js");
+const sharp = require("sharp");
 const path = require("path");
 const fs = require("fs");
-const axios = require("axios");
 
-// Initialize Express
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Enable CORS for a specific frontend origin (adjust as needed)
+app.use(cors({
+  origin: "http://localhost:3000"
+}));
 
 // Setup multer for file uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Models path
-const MODELS_PATH = path.join(__dirname, "models");
-const MODEL_URLS = [
-    "https://github.com/justadudewhohacks/face-api.js/raw/master/weights/ssd_mobilenetv1_model-weights_manifest.json",
-    "https://github.com/justadudewhohacks/face-api.js/raw/master/weights/face_expression_model-weights_manifest.json",
-    "https://github.com/justadudewhohacks/face-api.js/raw/master/weights/ssd_mobilenetv1_model-shard1",
-    "https://github.com/justadudewhohacks/face-api.js/raw/master/weights/face_expression_model-shard1",
-];
-
-// Ensure models directory exists
-async function downloadModels() {
-    if (!fs.existsSync(MODELS_PATH)) {
-        fs.mkdirSync(MODELS_PATH, { recursive: true });
-    }
-
-    for (const url of MODEL_URLS) {
-        const filename = path.basename(url);
-        const filepath = path.join(MODELS_PATH, filename);
-
-        if (!fs.existsSync(filepath)) {
-            console.log(`Downloading ${filename}...`);
-            const response = await axios.get(url, { responseType: "arraybuffer" });
-            fs.writeFileSync(filepath, response.data);
-        }
-    }
-    console.log("✅ Models downloaded successfully.");
+// Load the trained emotion detection model
+const modelPath = path.join(__dirname, "emotion_detection_model.h5");
+let model;
+async function loadModel() {
+  try {
+    model = await tf.loadLayersModel(`file://${modelPath}`);
+    console.log("Model loaded successfully.");
+  } catch (error) {
+    console.error("Error loading model:", error);
+    process.exit(1);
+  }
 }
+loadModel();
 
-// Patch face-api.js to use node-canvas
-faceapi.env.monkeyPatch({ Canvas: createCanvas, Image });
+// Emotion labels (ensure they correspond to your model's output)
+const emotionMap = {
+  0: "Angry",
+  1: "Disgust",
+  2: "Fear",
+  3: "Happy",
+  4: "Sad",
+  5: "Surprise",
+  6: "Neutral"
+};
 
-// Load models
-async function loadModels() {
-    try {
-        console.log("⏳ Loading face-api.js models...");
-        await downloadModels();
-        await faceapi.nets.ssdMobilenetv1.loadFromDisk(MODELS_PATH);
-        await faceapi.nets.faceExpressionNet.loadFromDisk(MODELS_PATH);
-        console.log("✅ Models loaded successfully.");
-    } catch (error) {
-        console.error("❌ Error loading models:", error);
-        process.exit(1);
-    }
-}
-loadModels();
-
+// Home route to test the server
 app.get("/", (req, res) => {
-    res.send("🎭 Emotion Detection Server is running!");
+  res.send("Emotion Detection Server is running!");
 });
 
-// API to process images and detect emotions
+// Helper function to preprocess the image (resize and normalize)
+async function preprocessImage(imageBuffer) {
+  const image = await sharp(imageBuffer)
+    .resize(224, 224)  // Resize to 224x224 (or whatever input size your model expects)
+    .toBuffer();
+
+  const canvas = createCanvas(224, 224);
+  const ctx = canvas.getContext("2d");
+  const img = new Image();
+  img.onload = () => ctx.drawImage(img, 0, 0);
+  img.src = image;
+
+  // Convert canvas image to tensor and normalize
+  const tensor = tf.browser.fromPixels(canvas).toFloat();
+  return tensor.div(tf.scalar(255));  // Normalize pixel values to [0, 1]
+}
+
+// API route to predict emotion
 app.post("/predict", upload.single("image"), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: "No image provided" });
-        }
-
-        // Convert image buffer to Canvas Image
-        const img = new Image();
-        img.src = req.file.buffer;
-        const canvas = createCanvas(img.width, img.height);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-
-        // Detect faces and emotions
-        const detections = await faceapi.detectAllFaces(canvas).withFaceExpressions();
-
-        if (!detections.length) {
-            return res.status(400).json({ error: "No face detected" });
-        }
-
-        // Extract emotions for each detected face
-        const results = detections.map((det, index) => {
-            const emotions = det.expressions;
-            const detectedEmotion = Object.keys(emotions).reduce((a, b) => emotions[a] > emotions[b] ? a : b);
-            return { face: index + 1, emotion: detectedEmotion };
-        });
-
-        res.json({ emotions: results });
-
-    } catch (error) {
-        console.error("❌ Server error:", error);
-        res.status(500).json({ error: "Internal server error" });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image provided" });
     }
+
+    // Preprocess the image before feeding it into the model
+    const processedImage = await preprocessImage(req.file.buffer);
+
+    // Make a prediction
+    const prediction = model.predict(processedImage.expandDims(0)); // Add batch dimension
+    const predictionData = await prediction.data();
+    
+    // Get the index of the most probable emotion
+    const emotionIndex = predictionData.indexOf(Math.max(...predictionData));
+    const detectedEmotion = emotionMap[emotionIndex] || "unknown"; // Map index to emotion label
+
+    res.json({ emotion: detectedEmotion });
+  } catch (error) {
+    console.error("Error during prediction:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
