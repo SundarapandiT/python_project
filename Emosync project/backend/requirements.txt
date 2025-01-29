@@ -4,5 +4,6 @@ tensorflow
 numpy
 pillow
 fer
+moviepy
 gunicorn
 
