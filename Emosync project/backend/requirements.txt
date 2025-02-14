@@ -1,9 +1,7 @@
 Flask
 Flask-Cors
-tensorflow
+deepface
 numpy
 pillow
-fer
-moviepy
 gunicorn
 
