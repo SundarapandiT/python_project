@@ -1,6 +1,7 @@
 Flask
 Flask-Cors
 deepface
+tf-keras
 numpy
 pillow
 gunicorn
