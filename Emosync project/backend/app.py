@@ -37,7 +37,7 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 
-// const express = require("express");
+'''// const express = require("express");
 // const cors = require("cors");
 // const multer = require("multer");
 // const { createCanvas, Image } = require("canvas");
@@ -126,4 +126,4 @@ if __name__ == '__main__':
 
 // // Start Server
 // const PORT = process.env.PORT || 5000;
-// app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+// app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));'''
