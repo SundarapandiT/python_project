@@ -31,7 +31,7 @@ function GetEmotion() {
       const formData = new FormData();
       formData.append("image", blob, "captured_image.jpg");
 
-      const response = await axios.post("http://127.0.0.1:5000/predict", formData);
+      const response = await axios.post("https://python-ai-model-service.onrender.com/predict", formData);
       const detectedEmotion = response.data.emotion;
       setEmotion(detectedEmotion);
       console.log(`Detected Emotion: ${detectedEmotion}`);
