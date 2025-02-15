@@ -7,7 +7,7 @@ import io
 app = Flask(__name__)
 
 # Allow CORS for a specific origin (e.g., localhost:3000)
-CORS(app, origins="http://localhost:3000")
+CORS(app, origins=["http://localhost:3000", "https://emosync-green.vercel.app"])
 
 @app.route('/')
 def home():
