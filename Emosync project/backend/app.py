@@ -3,9 +3,23 @@ import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from deepface import DeepFace
+import threading
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "https://emosync-green.vercel.app"])
+
+# Global lock to prevent overloading
+lock = threading.Lock()
+
+def analyze_emotion(image):
+    try:
+        # Reduce image size for faster processing
+        resized_image = cv2.resize(image, (224, 224))
+        result = DeepFace.analyze(resized_image, actions=['emotion'], enforce_detection=False)
+        dominant_emotion = result[0]['dominant_emotion']
+        return dominant_emotion
+    except Exception as e:
+        return str(e)
 
 @app.route('/')
 def home():
@@ -19,55 +33,56 @@ def analyze():
     file = request.files['image']
     npimg = np.frombuffer(file.read(), np.uint8)
     image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+    # Use threading to speed up the process
+    with lock:
+        thread = threading.Thread(target=analyze_emotion, args=(image,))
+        thread.start()
+        thread.join()
+
+    # Assuming thread handles emotion extraction and stores result in a global variable
+    try:
+        emotion = analyze_emotion(image)
+        return jsonify({'emotion': emotion})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, threaded=True)
     
-    # Resize image to 48x48 for faster processing
-    image = cv2.resize(image, (48, 48))
-
-    try:
-        result = DeepFace.analyze(image, actions=['emotion'], 
-                                  enforce_detection=False, 
-                                  detector_backend='opencv', 
-                                  model_name="fer")
-        dominant_emotion = result[0]['dominant_emotion']
-        return jsonify({'emotion': dominant_emotion})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
-'''import cv2
-import numpy as np
-import base64
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from deepface import DeepFace
-
-app = Flask(__name__)
-# Allow CORS for a specific origin (e.g., localhost:3000)
-CORS(app, origins=["http://localhost:3000", "https://emosync-green.vercel.app"])
-
-@app.route('/')
-def home():
-    return "Successfully running"
-
-@app.route('/predict', methods=['POST'])
-def analyze():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image file uploaded'}), 400
-
-    file = request.files['image']
-    npimg = np.frombuffer(file.read(), np.uint8)
-    image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
-
-    try:
-        result = DeepFace.analyze(image, actions=['emotion'])
-        dominant_emotion = result[0]['dominant_emotion']
-        return jsonify({'emotion': dominant_emotion})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)'''
+# import cv2  
+# import numpy as np  
+# import base64  
+# from flask import Flask, request, jsonify  
+# from flask_cors import CORS  
+# from deepface import DeepFace  
+  
+# app = Flask(__name__)  
+# # Allow CORS for a specific origin (e.g., localhost:3000)  
+# CORS(app, origins=["http://localhost:3000", "https://emosync-green.vercel.app"])  
+  
+# @app.route('/')  
+# def home():  
+#     return "Successfully running"  
+  
+# @app.route('/predict', methods=['POST'])  
+# def analyze():  
+#     if 'image' not in request.files:  
+#         return jsonify({'error': 'No image file uploaded'}), 400  
+  
+#     file = request.files['image']  
+#     npimg = np.frombuffer(file.read(), np.uint8)  
+#     image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)  
+  
+#     try:  
+#         result = DeepFace.analyze(image, actions=['emotion'])  
+#         dominant_emotion = result[0]['dominant_emotion']  
+#         return jsonify({'emotion': dominant_emotion})  
+#     except Exception as e:  
+#         return jsonify({'error': str(e)}), 500  
+  
+# if __name__ == '__main__':  
+#     app.run(debug=True)
 
 # '''from flask import Flask, request, jsonify
 # from flask_cors import CORS
