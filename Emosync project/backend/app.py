@@ -1,5 +1,42 @@
 import cv2
 import numpy as np
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from deepface import DeepFace
+
+app = Flask(__name__)
+CORS(app, origins=["http://localhost:3000", "https://emosync-green.vercel.app"])
+
+@app.route('/')
+def home():
+    return "Successfully running"
+
+@app.route('/predict', methods=['POST'])
+def analyze():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file uploaded'}), 400
+
+    file = request.files['image']
+    npimg = np.frombuffer(file.read(), np.uint8)
+    image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    
+    # Resize image to 48x48 for faster processing
+    image = cv2.resize(image, (48, 48))
+
+    try:
+        result = DeepFace.analyze(image, actions=['emotion'], 
+                                  enforce_detection=False, 
+                                  detector_backend='opencv', 
+                                  model_name="fer")
+        dominant_emotion = result[0]['dominant_emotion']
+        return jsonify({'emotion': dominant_emotion})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
+'''import cv2
+import numpy as np
 import base64
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -30,7 +67,7 @@ def analyze():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True)'''
 
 # '''from flask import Flask, request, jsonify
 # from flask_cors import CORS
